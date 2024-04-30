@@ -11,13 +11,8 @@ import {
 import { getChainId, signMessage } from "viem/actions"
 import { getAccountNonce } from "../../actions/public/getAccountNonce"
 import { getSenderAddress } from "../../actions/public/getSenderAddress"
-import type {
-    ENTRYPOINT_ADDRESS_V06_TYPE,
-    ENTRYPOINT_ADDRESS_V07_TYPE,
-    Prettify
-} from "../../types"
+import type { Prettify } from "../../types"
 import type { EntryPoint } from "../../types/entrypoint"
-import { getEntryPointVersion } from "../../utils"
 import { getUserOperationHash } from "../../utils/getUserOperationHash"
 import { isSmartAccountDeployed } from "../../utils/isSmartAccountDeployed"
 import { toSmartAccount } from "../toSmartAccount"
@@ -67,7 +62,7 @@ const getAccountInitCode = async (
             }
         ],
         functionName: "createAccount",
-        args: [owner, index]
+        args: [owner, index] as const
     })
 }
 
@@ -88,22 +83,11 @@ const getAccountAddress = async <
     entryPoint: entryPoint
     index?: bigint
 }): Promise<Address> => {
-    const entryPointVersion = getEntryPointVersion(entryPointAddress)
-
     const factoryData = await getAccountInitCode(owner, index)
 
-    if (entryPointVersion === "v0.6") {
-        return getSenderAddress<ENTRYPOINT_ADDRESS_V06_TYPE>(client, {
-            initCode: concatHex([factoryAddress, factoryData]),
-            entryPoint: entryPointAddress as ENTRYPOINT_ADDRESS_V06_TYPE
-        })
-    }
-
-    // Get the sender address based on the init code
-    return getSenderAddress<ENTRYPOINT_ADDRESS_V07_TYPE>(client, {
-        factory: factoryAddress,
-        factoryData,
-        entryPoint: entryPointAddress as ENTRYPOINT_ADDRESS_V07_TYPE
+    return getSenderAddress(client, {
+        initCode: concatHex([factoryAddress, factoryData]),
+        entryPoint: entryPointAddress
     })
 }
 
@@ -243,35 +227,6 @@ export async function signerToSimpleSmartAccount<
                     data: Hex
                 }[]
 
-                if (getEntryPointVersion(entryPointAddress) === "v0.6") {
-                    return encodeFunctionData({
-                        abi: [
-                            {
-                                inputs: [
-                                    {
-                                        internalType: "address[]",
-                                        name: "dest",
-                                        type: "address[]"
-                                    },
-                                    {
-                                        internalType: "bytes[]",
-                                        name: "func",
-                                        type: "bytes[]"
-                                    }
-                                ],
-                                name: "executeBatch",
-                                outputs: [],
-                                stateMutability: "nonpayable",
-                                type: "function"
-                            }
-                        ],
-                        functionName: "executeBatch",
-                        args: [
-                            argsArray.map((a) => a.to),
-                            argsArray.map((a) => a.data)
-                        ]
-                    })
-                }
                 return encodeFunctionData({
                     abi: [
                         {
@@ -280,11 +235,6 @@ export async function signerToSimpleSmartAccount<
                                     internalType: "address[]",
                                     name: "dest",
                                     type: "address[]"
-                                },
-                                {
-                                    internalType: "uint256[]",
-                                    name: "value",
-                                    type: "uint256[]"
                                 },
                                 {
                                     internalType: "bytes[]",
@@ -301,7 +251,6 @@ export async function signerToSimpleSmartAccount<
                     functionName: "executeBatch",
                     args: [
                         argsArray.map((a) => a.to),
-                        argsArray.map((a) => a.value),
                         argsArray.map((a) => a.data)
                     ]
                 })

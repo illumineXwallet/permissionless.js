@@ -109,7 +109,7 @@ export const buildUserOp = async (
     const { maxFeePerGas, maxPriorityFeePerGas } =
         await publicClient.estimateFeesPerGas()
 
-    const userOperation: UserOperation<"v0.6"> = {
+    const userOperation: UserOperation = {
         sender: accountAddress,
         nonce: nonce,
         initCode: await getInitCode(factoryAddress, eoaWalletClient, index),

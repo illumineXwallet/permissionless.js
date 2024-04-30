@@ -27,7 +27,7 @@ export function getEstimateUserOperationGasError<
         const cause = getBundlerError(
             // biome-ignore lint/complexity/noBannedTypes: <explanation>
             error as {} as BaseError,
-            args as GetBundlerErrorParameters<entryPoint>
+            args as GetBundlerErrorParameters
         )
         // biome-ignore lint/complexity/noBannedTypes: <explanation>
         if (cause instanceof UnknownNodeError) return error as {} as BaseError

@@ -393,7 +393,7 @@ export type SmartAccountActions<
             >[1]
         >,
         stateOverrides?: StateOverrides
-    ) => Promise<Prettify<PrepareUserOperationRequestReturnType<entryPoint>>>
+    ) => Promise<Prettify<PrepareUserOperationRequestReturnType>>
     sendUserOperation: <TTransport extends Transport>(
         args: Prettify<
             Parameters<

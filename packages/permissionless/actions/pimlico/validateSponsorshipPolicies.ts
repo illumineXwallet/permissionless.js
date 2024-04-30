@@ -1,6 +1,6 @@
 import type { Account, Chain, Client, Transport } from "viem"
 import type { Prettify } from "../../types/"
-import type { EntryPoint, GetEntryPointVersion } from "../../types/entrypoint"
+import type { EntryPoint } from "../../types/entrypoint"
 import type { PimlicoPaymasterRpcSchema } from "../../types/pimlico"
 import type {
     UserOperation,
@@ -11,7 +11,7 @@ import { deepHexlify } from "../../utils/deepHexlify"
 export type ValidateSponsorshipPoliciesParameters<
     entryPoint extends EntryPoint
 > = {
-    userOperation: UserOperation<GetEntryPointVersion<entryPoint>>
+    userOperation: UserOperation
     entryPoint: entryPoint
     sponsorshipPolicyIds: string[]
 }
@@ -78,9 +78,7 @@ export const validateSponsorshipPolicies = async <
     return await client.request({
         method: "pm_validateSponsorshipPolicies",
         params: [
-            deepHexlify(args.userOperation) as UserOperationWithBigIntAsHex<
-                GetEntryPointVersion<entryPoint>
-            >,
+            deepHexlify(args.userOperation) as UserOperationWithBigIntAsHex,
             args.entryPoint,
             args.sponsorshipPolicyIds
         ]

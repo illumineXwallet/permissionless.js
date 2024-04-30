@@ -14,7 +14,7 @@ import {
 } from "viem"
 import { toAccount } from "viem/accounts"
 import type { UserOperation } from "../types"
-import type { EntryPoint, GetEntryPointVersion } from "../types/entrypoint"
+import type { EntryPoint } from "../types/entrypoint"
 import { isSmartAccountDeployed } from "../utils"
 import {
     SignTransactionNotSupportedBySmartAccount,
@@ -67,17 +67,13 @@ export function toSmartAccount<
                   data: Hex
               }[]
     ) => Promise<Hex>
-    getDummySignature(
-        userOperation: UserOperation<GetEntryPointVersion<TEntryPoint>>
-    ): Promise<Hex>
+    getDummySignature(userOperation: UserOperation): Promise<Hex>
     encodeDeployCallData: ({
         abi,
         args,
         bytecode
     }: EncodeDeployDataParameters<TAbi>) => Promise<Hex>
-    signUserOperation: (
-        userOperation: UserOperation<GetEntryPointVersion<TEntryPoint>>
-    ) => Promise<Hex>
+    signUserOperation: (userOperation: UserOperation) => Promise<Hex>
 }): SmartAccount<TEntryPoint, TSource, transport, chain, TAbi> {
     const account = toAccount({
         address: address,

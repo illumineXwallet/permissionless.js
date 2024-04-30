@@ -17,9 +17,7 @@ import {
     hashTypedData,
     hexToBigInt,
     keccak256,
-    pad,
     toBytes,
-    toHex,
     zeroAddress
 } from "viem"
 import {
@@ -29,17 +27,8 @@ import {
     signTypedData
 } from "viem/actions"
 import { getAccountNonce } from "../../actions/public/getAccountNonce"
-import type {
-    EntryPointVersion,
-    GetEntryPointVersion,
-    Prettify
-} from "../../types"
+import type { Prettify } from "../../types"
 import type { EntryPoint, UserOperation } from "../../types"
-import {
-    getEntryPointVersion,
-    isUserOperationVersion06,
-    isUserOperationVersion07
-} from "../../utils/getEntryPointVersion"
 import { isSmartAccountDeployed } from "../../utils/isSmartAccountDeployed"
 import { toSmartAccount } from "../toSmartAccount"
 import {
@@ -68,63 +57,25 @@ const EIP712_SAFE_OPERATION_TYPE_V06 = {
     ]
 }
 
-const EIP712_SAFE_OPERATION_TYPE_V07 = {
-    SafeOp: [
-        { type: "address", name: "safe" },
-        { type: "uint256", name: "nonce" },
-        { type: "bytes", name: "initCode" },
-        { type: "bytes", name: "callData" },
-        { type: "uint128", name: "verificationGasLimit" },
-        { type: "uint128", name: "callGasLimit" },
-        { type: "uint256", name: "preVerificationGas" },
-        { type: "uint128", name: "maxPriorityFeePerGas" },
-        { type: "uint128", name: "maxFeePerGas" },
-        { type: "bytes", name: "paymasterAndData" },
-        { type: "uint48", name: "validAfter" },
-        { type: "uint48", name: "validUntil" },
-        { type: "address", name: "entryPoint" }
-    ]
-}
-
 const SAFE_VERSION_TO_ADDRESSES_MAP: {
     [key in SafeVersion]: {
-        [key in EntryPointVersion]: {
-            SAFE_MODULE_SETUP_ADDRESS: Address
-            SAFE_4337_MODULE_ADDRESS: Address
-            SAFE_PROXY_FACTORY_ADDRESS: Address
-            SAFE_SINGLETON_ADDRESS: Address
-            MULTI_SEND_ADDRESS: Address
-            MULTI_SEND_CALL_ONLY_ADDRESS: Address
-        }
+        SAFE_MODULE_SETUP_ADDRESS: Address
+        SAFE_4337_MODULE_ADDRESS: Address
+        SAFE_PROXY_FACTORY_ADDRESS: Address
+        SAFE_SINGLETON_ADDRESS: Address
+        MULTI_SEND_ADDRESS: Address
+        MULTI_SEND_CALL_ONLY_ADDRESS: Address
     }
 } = {
     "1.4.1": {
-        "v0.6": {
-            SAFE_MODULE_SETUP_ADDRESS:
-                "0x8EcD4ec46D4D2a6B64fE960B3D64e8B94B2234eb",
-            SAFE_4337_MODULE_ADDRESS:
-                "0xa581c4A4DB7175302464fF3C06380BC3270b4037",
-            SAFE_PROXY_FACTORY_ADDRESS:
-                "0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67",
-            SAFE_SINGLETON_ADDRESS:
-                "0x41675C099F32341bf84BFc5382aF534df5C7461a",
-            MULTI_SEND_ADDRESS: "0x38869bf66a61cF6bDB996A6aE40D5853Fd43B526",
-            MULTI_SEND_CALL_ONLY_ADDRESS:
-                "0x9641d764fc13c8B624c04430C7356C1C7C8102e2"
-        },
-        "v0.7": {
-            SAFE_MODULE_SETUP_ADDRESS:
-                "0x2dd68b007B46fBe91B9A7c3EDa5A7a1063cB5b47",
-            SAFE_4337_MODULE_ADDRESS:
-                "0x75cf11467937ce3F2f357CE24ffc3DBF8fD5c226",
-            SAFE_PROXY_FACTORY_ADDRESS:
-                "0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67",
-            SAFE_SINGLETON_ADDRESS:
-                "0x41675C099F32341bf84BFc5382aF534df5C7461a",
-            MULTI_SEND_ADDRESS: "0x38869bf66a61cF6bDB996A6aE40D5853Fd43B526",
-            MULTI_SEND_CALL_ONLY_ADDRESS:
-                "0x9641d764fc13c8B624c04430C7356C1C7C8102e2"
-        }
+        SAFE_MODULE_SETUP_ADDRESS: "0x8EcD4ec46D4D2a6B64fE960B3D64e8B94B2234eb",
+        SAFE_4337_MODULE_ADDRESS: "0xa581c4A4DB7175302464fF3C06380BC3270b4037",
+        SAFE_PROXY_FACTORY_ADDRESS:
+            "0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67",
+        SAFE_SINGLETON_ADDRESS: "0x41675C099F32341bf84BFc5382aF534df5C7461a",
+        MULTI_SEND_ADDRESS: "0x38869bf66a61cF6bDB996A6aE40D5853Fd43B526",
+        MULTI_SEND_CALL_ONLY_ADDRESS:
+            "0x9641d764fc13c8B624c04430C7356C1C7C8102e2"
     }
 }
 
@@ -339,32 +290,6 @@ const getInitializerCode = async ({
     })
 }
 
-function getPaymasterAndData(unpackedUserOperation: UserOperation<"v0.7">) {
-    return unpackedUserOperation.paymaster
-        ? concat([
-              unpackedUserOperation.paymaster,
-              pad(
-                  toHex(
-                      unpackedUserOperation.paymasterVerificationGasLimit ||
-                          BigInt(0)
-                  ),
-                  {
-                      size: 16
-                  }
-              ),
-              pad(
-                  toHex(
-                      unpackedUserOperation.paymasterPostOpGasLimit || BigInt(0)
-                  ),
-                  {
-                      size: 16
-                  }
-              ),
-              unpackedUserOperation.paymasterData || ("0x" as Hex)
-          ])
-        : "0x"
-}
-
 const getAccountInitCode = async ({
     owner,
     safeModuleSetupAddress,
@@ -518,7 +443,6 @@ const getAccountAddress = async <
 
 const getDefaultAddresses = (
     safeVersion: SafeVersion,
-    entryPointAddress: EntryPoint,
     {
         addModuleLibAddress: _addModuleLibAddress,
         safeModuleSetupAddress: _safeModuleSetupAddress,
@@ -537,35 +461,26 @@ const getDefaultAddresses = (
         multiSendCallOnlyAddress?: Address
     }
 ) => {
-    const entryPointVersion = getEntryPointVersion(entryPointAddress)
-
     const safeModuleSetupAddress =
         _safeModuleSetupAddress ??
         _addModuleLibAddress ??
-        SAFE_VERSION_TO_ADDRESSES_MAP[safeVersion][entryPointVersion]
-            .SAFE_MODULE_SETUP_ADDRESS
+        SAFE_VERSION_TO_ADDRESSES_MAP[safeVersion].SAFE_MODULE_SETUP_ADDRESS
     const safe4337ModuleAddress =
         _safe4337ModuleAddress ??
-        SAFE_VERSION_TO_ADDRESSES_MAP[safeVersion][entryPointVersion]
-            .SAFE_4337_MODULE_ADDRESS
+        SAFE_VERSION_TO_ADDRESSES_MAP[safeVersion].SAFE_4337_MODULE_ADDRESS
     const safeProxyFactoryAddress =
         _safeProxyFactoryAddress ??
-        SAFE_VERSION_TO_ADDRESSES_MAP[safeVersion][entryPointVersion]
-            .SAFE_PROXY_FACTORY_ADDRESS
+        SAFE_VERSION_TO_ADDRESSES_MAP[safeVersion].SAFE_PROXY_FACTORY_ADDRESS
     const safeSingletonAddress =
         _safeSingletonAddress ??
-        SAFE_VERSION_TO_ADDRESSES_MAP[safeVersion][entryPointVersion]
-            .SAFE_SINGLETON_ADDRESS
+        SAFE_VERSION_TO_ADDRESSES_MAP[safeVersion].SAFE_SINGLETON_ADDRESS
     const multiSendAddress =
         _multiSendAddress ??
-        SAFE_VERSION_TO_ADDRESSES_MAP[safeVersion][entryPointVersion]
-            .MULTI_SEND_ADDRESS
+        SAFE_VERSION_TO_ADDRESSES_MAP[safeVersion].MULTI_SEND_ADDRESS
 
     const multiSendCallOnlyAddress =
         _multiSendCallOnlyAddress ??
-        SAFE_VERSION_TO_ADDRESSES_MAP[safeVersion][
-            getEntryPointVersion(entryPointAddress)
-        ].MULTI_SEND_CALL_ONLY_ADDRESS
+        SAFE_VERSION_TO_ADDRESSES_MAP[safeVersion].MULTI_SEND_CALL_ONLY_ADDRESS
 
     return {
         safeModuleSetupAddress,
@@ -650,7 +565,7 @@ export async function signerToSafeSmartAccount<
         safeSingletonAddress,
         multiSendAddress,
         multiSendCallOnlyAddress
-    } = getDefaultAddresses(safeVersion, entryPointAddress, {
+    } = getDefaultAddresses(safeVersion, {
         safeModuleSetupAddress: _safeModuleSetupAddress,
         safe4337ModuleAddress: _safe4337ModuleAddress,
         safeProxyFactoryAddress: _safeProxyFactoryAddress,
@@ -746,9 +661,7 @@ export async function signerToSafeSmartAccount<
                     entryPoint: entryPointAddress
                 })
             },
-            async signUserOperation(
-                userOperation: UserOperation<GetEntryPointVersion<entryPoint>>
-            ) {
+            async signUserOperation(userOperation: UserOperation) {
                 const message = {
                     safe: accountAddress,
                     callData: userOperation.callData,
@@ -765,24 +678,7 @@ export async function signerToSafeSmartAccount<
                     entryPoint: entryPointAddress
                 }
 
-                if (
-                    isUserOperationVersion06(entryPointAddress, userOperation)
-                ) {
-                    message.paymasterAndData = userOperation.paymasterAndData
-                }
-
-                if (
-                    isUserOperationVersion07(entryPointAddress, userOperation)
-                ) {
-                    if (userOperation.factory && userOperation.factoryData) {
-                        message.initCode = concatHex([
-                            userOperation.factory,
-                            userOperation.factoryData
-                        ])
-                    }
-                    message.paymasterAndData =
-                        getPaymasterAndData(userOperation)
-                }
+                message.paymasterAndData = userOperation.paymasterAndData
 
                 const signatures = [
                     {
@@ -793,11 +689,7 @@ export async function signerToSafeSmartAccount<
                                 chainId: chainId,
                                 verifyingContract: safe4337ModuleAddress
                             },
-                            types:
-                                getEntryPointVersion(entryPointAddress) ===
-                                "v0.6"
-                                    ? EIP712_SAFE_OPERATION_TYPE_V06
-                                    : EIP712_SAFE_OPERATION_TYPE_V07,
+                            types: EIP712_SAFE_OPERATION_TYPE_V06,
                             primaryType: "SafeOp",
                             message: message
                         })

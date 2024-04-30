@@ -16,25 +16,14 @@ import {
 import { simulateContract } from "viem/actions"
 import { getAction } from "viem/utils"
 import type { Prettify } from "../../types/"
-import type {
-    ENTRYPOINT_ADDRESS_V06_TYPE,
-    EntryPoint
-} from "../../types/entrypoint"
+import type { EntryPoint } from "../../types/entrypoint"
 
-export type GetSenderAddressParams<entryPoint extends EntryPoint> =
-    entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE
-        ? {
-              initCode: Hex
-              entryPoint: entryPoint
-              factory?: never
-              factoryData?: never
-          }
-        : {
-              entryPoint: entryPoint
-              factory: Address
-              factoryData: Hex
-              initCode?: never
-          }
+export type GetSenderAddressParams<entryPoint extends EntryPoint> = {
+    initCode: Hex
+    entryPoint: entryPoint
+    factory?: never
+    factoryData?: never
+}
 
 export class InvalidEntryPointError extends BaseError {
     override name = "InvalidEntryPointError"
@@ -80,7 +69,7 @@ export class InvalidEntryPointError extends BaseError {
  * // Return '0x7a88a206ba40b37a8c07a2b5688cf8b287318b63'
  */
 export const getSenderAddress = async <
-    entryPoint extends EntryPoint,
+    entryPoint extends EntryPoint = EntryPoint,
     TTransport extends Transport = Transport,
     TChain extends Chain | undefined = Chain | undefined
 >(
@@ -129,7 +118,13 @@ export const getSenderAddress = async <
                 }
             ],
             functionName: "getSenderAddress",
-            args: [initCode || concat([factory as Hex, factoryData as Hex])]
+            args: [
+                initCode ||
+                    concat([
+                        factory as unknown as Hex,
+                        factoryData as unknown as Hex
+                    ])
+            ]
         })
     } catch (e) {
         const err = e as ContractFunctionExecutionErrorType

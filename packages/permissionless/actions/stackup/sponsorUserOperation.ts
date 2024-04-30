@@ -1,52 +1,27 @@
-import type { Address, Hex } from "viem"
+import type { Hex } from "viem"
 import type { PartialBy } from "viem/types/utils"
 import { type StackupPaymasterClient } from "../../clients/stackup"
-import type {
-    ENTRYPOINT_ADDRESS_V06_TYPE,
-    EntryPoint
-} from "../../types/entrypoint"
+import type { EntryPoint } from "../../types/entrypoint"
 import type { StackupPaymasterContext } from "../../types/stackup"
 import type { UserOperation } from "../../types/userOperation"
 import { deepHexlify } from "../../utils/deepHexlify"
-import { ENTRYPOINT_ADDRESS_V06 } from "../../utils/getEntryPointVersion"
 
 export type SponsorUserOperationParameters<entryPoint extends EntryPoint> = {
-    userOperation: entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE
-        ? PartialBy<
-              UserOperation<"v0.6">,
-              "callGasLimit" | "preVerificationGas" | "verificationGasLimit"
-          >
-        : PartialBy<
-              UserOperation<"v0.7">,
-              | "callGasLimit"
-              | "preVerificationGas"
-              | "verificationGasLimit"
-              | "paymasterVerificationGasLimit"
-              | "paymasterPostOpGasLimit"
-          >
+    userOperation: PartialBy<
+        UserOperation,
+        "callGasLimit" | "preVerificationGas" | "verificationGasLimit"
+    >
     entryPoint: entryPoint
     context: StackupPaymasterContext
 }
 
-export type SponsorUserOperationReturnType<entryPoint extends EntryPoint> =
-    entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE
-        ? Pick<
-              UserOperation<"v0.6">,
-              | "callGasLimit"
-              | "verificationGasLimit"
-              | "preVerificationGas"
-              | "paymasterAndData"
-          >
-        : Pick<
-              UserOperation<"v0.7">,
-              | "callGasLimit"
-              | "verificationGasLimit"
-              | "preVerificationGas"
-              | "paymaster"
-              | "paymasterVerificationGasLimit"
-              | "paymasterPostOpGasLimit"
-              | "paymasterData"
-          >
+export type SponsorUserOperationReturnType = Pick<
+    UserOperation,
+    | "callGasLimit"
+    | "verificationGasLimit"
+    | "preVerificationGas"
+    | "paymasterAndData"
+>
 
 /**
  * Returns paymasterAndData & updated gas parameters required to sponsor a userOperation.
@@ -76,51 +51,26 @@ export type SponsorUserOperationReturnType<entryPoint extends EntryPoint> =
 export const sponsorUserOperation = async <entryPoint extends EntryPoint>(
     client: StackupPaymasterClient<entryPoint>,
     args: SponsorUserOperationParameters<entryPoint>
-): Promise<SponsorUserOperationReturnType<entryPoint>> => {
+): Promise<SponsorUserOperationReturnType> => {
     const response = await client.request({
         method: "pm_sponsorUserOperation",
         params: [deepHexlify(args.userOperation), args.entryPoint, args.context]
     })
 
-    if (args.entryPoint === ENTRYPOINT_ADDRESS_V06) {
-        const responseV06 = response as {
-            paymasterAndData: Hex
-            preVerificationGas: Hex
-            verificationGasLimit: Hex
-            callGasLimit: Hex
-            paymaster?: never
-            paymasterVerificationGasLimit?: never
-            paymasterPostOpGasLimit?: never
-            paymasterData?: never
-        }
-        return {
-            paymasterAndData: responseV06.paymasterAndData,
-            preVerificationGas: BigInt(responseV06.preVerificationGas),
-            verificationGasLimit: BigInt(responseV06.verificationGasLimit),
-            callGasLimit: BigInt(responseV06.callGasLimit)
-        } as SponsorUserOperationReturnType<entryPoint>
-    }
-
-    const responseV07 = response as {
+    const responseV06 = response as {
+        paymasterAndData: Hex
         preVerificationGas: Hex
         verificationGasLimit: Hex
         callGasLimit: Hex
-        paymaster: Address
-        paymasterVerificationGasLimit: Hex
-        paymasterPostOpGasLimit: Hex
-        paymasterData: Hex
-        paymasterAndData?: never
+        paymaster?: never
+        paymasterVerificationGasLimit?: never
+        paymasterPostOpGasLimit?: never
+        paymasterData?: never
     }
-
     return {
-        callGasLimit: BigInt(responseV07.callGasLimit),
-        verificationGasLimit: BigInt(responseV07.verificationGasLimit),
-        preVerificationGas: BigInt(responseV07.preVerificationGas),
-        paymaster: responseV07.paymaster,
-        paymasterVerificationGasLimit: BigInt(
-            responseV07.paymasterVerificationGasLimit
-        ),
-        paymasterPostOpGasLimit: BigInt(responseV07.paymasterPostOpGasLimit),
-        paymasterData: responseV07.paymasterData
-    } as SponsorUserOperationReturnType<entryPoint>
+        paymasterAndData: responseV06.paymasterAndData,
+        preVerificationGas: BigInt(responseV06.preVerificationGas),
+        verificationGasLimit: BigInt(responseV06.verificationGasLimit),
+        callGasLimit: BigInt(responseV06.callGasLimit)
+    } as SponsorUserOperationReturnType
 }

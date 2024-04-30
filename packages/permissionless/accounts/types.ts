@@ -8,7 +8,7 @@ import {
 } from "viem"
 import type { Chain, EncodeDeployDataParameters, Transport } from "viem"
 import type { UserOperation } from "../types"
-import type { EntryPoint, GetEntryPointVersion } from "../types/entrypoint"
+import type { EntryPoint } from "../types/entrypoint"
 
 export class SignTransactionNotSupportedBySmartAccount extends BaseError {
     override name = "SignTransactionNotSupportedBySmartAccount"
@@ -52,17 +52,13 @@ export type SmartAccount<
                   data: Hex
               }[]
     ) => Promise<Hex>
-    getDummySignature(
-        userOperation: UserOperation<GetEntryPointVersion<entryPoint>>
-    ): Promise<Hex>
+    getDummySignature(userOperation: UserOperation): Promise<Hex>
     encodeDeployCallData: ({
         abi,
         args,
         bytecode
     }: EncodeDeployDataParameters<TAbi>) => Promise<Hex>
-    signUserOperation: (
-        userOperation: UserOperation<GetEntryPointVersion<entryPoint>>
-    ) => Promise<Hex>
+    signUserOperation: (userOperation: UserOperation) => Promise<Hex>
 }
 
 export type SmartAccountSigner<

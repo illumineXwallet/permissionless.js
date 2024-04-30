@@ -2,7 +2,7 @@ import type { Account, BaseError, Chain, Client, Hash, Transport } from "viem"
 import type { BundlerClient } from "../../clients/createBundlerClient"
 import type { Prettify } from "../../types/"
 import type { BundlerRpcSchema } from "../../types/bundler"
-import type { EntryPoint, GetEntryPointVersion } from "../../types/entrypoint"
+import type { EntryPoint } from "../../types/entrypoint"
 import type {
     UserOperation,
     UserOperationWithBigIntAsHex
@@ -11,7 +11,7 @@ import { deepHexlify } from "../../utils/deepHexlify"
 import { getSendUserOperationError } from "../../utils/errors/getSendUserOperationError"
 
 export type SendUserOperationParameters<entryPoint extends EntryPoint> = {
-    userOperation: UserOperation<GetEntryPointVersion<entryPoint>>
+    userOperation: UserOperation
     entryPoint: entryPoint
 }
 
@@ -55,9 +55,7 @@ export const sendUserOperation = async <
         const userOperationHash = await client.request({
             method: "eth_sendUserOperation",
             params: [
-                deepHexlify(userOperation) as UserOperationWithBigIntAsHex<
-                    GetEntryPointVersion<entryPoint>
-                >,
+                deepHexlify(userOperation) as UserOperationWithBigIntAsHex,
                 entryPoint
             ]
         })

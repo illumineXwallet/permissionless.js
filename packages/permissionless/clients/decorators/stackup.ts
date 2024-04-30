@@ -37,7 +37,7 @@ export type StackupPaymasterClientActions<entryPoint extends EntryPoint> = {
      */
     sponsorUserOperation: (
         args: Omit<SponsorUserOperationParameters<entryPoint>, "entrypoint">
-    ) => Promise<SponsorUserOperationReturnType<entryPoint>>
+    ) => Promise<SponsorUserOperationReturnType>
 
     /**
      * Returns all the Paymaster addresses associated with an EntryPoint that’s owned by this service.

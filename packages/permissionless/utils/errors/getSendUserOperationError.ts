@@ -14,7 +14,7 @@ export function getSendUserOperationError<entryPoint extends EntryPoint>(
     const cause = (() => {
         const cause = getBundlerError(
             err as BaseError,
-            args as GetBundlerErrorParameters<entryPoint>
+            args as GetBundlerErrorParameters
         )
         if (cause instanceof UnknownNodeError) return err as BaseError
         return cause

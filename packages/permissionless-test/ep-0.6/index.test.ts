@@ -120,8 +120,7 @@ describe("test public actions and utils", () => {
     test("signUserOperationHashWithECDSA", async () => {
         const bundlerClient = getBundlerClient()
         const eoaWalletClient = getEoaWalletClient()
-        const userOperation: UserOperation<"v0.6"> =
-            await buildUserOp(eoaWalletClient)
+        const userOperation: UserOperation = await buildUserOp(eoaWalletClient)
 
         const entryPoint = getEntryPoint()
         const chain = getTestingChain()

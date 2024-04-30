@@ -10,9 +10,8 @@ import type { PartialBy } from "viem/types/utils"
 import type { BundlerClient } from "../../clients/createBundlerClient"
 import type { Prettify } from "../../types/"
 import type { BundlerRpcSchema, StateOverrides } from "../../types/bundler"
-import type { EntryPoint, GetEntryPointVersion } from "../../types/entrypoint"
+import type { EntryPoint } from "../../types/entrypoint"
 import type { UserOperation } from "../../types/userOperation"
-import { getEntryPointVersion } from "../../utils"
 import { deepHexlify } from "../../utils/deepHexlify"
 import {
     type GetEstimateUserOperationGasErrorReturnType,
@@ -21,36 +20,18 @@ import {
 
 export type EstimateUserOperationGasParameters<entryPoint extends EntryPoint> =
     {
-        userOperation: GetEntryPointVersion<entryPoint> extends "v0.6"
-            ? PartialBy<
-                  UserOperation<"v0.6">,
-                  "callGasLimit" | "preVerificationGas" | "verificationGasLimit"
-              >
-            : PartialBy<
-                  UserOperation<"v0.7">,
-                  | "callGasLimit"
-                  | "preVerificationGas"
-                  | "verificationGasLimit"
-                  | "paymasterVerificationGasLimit"
-                  | "paymasterPostOpGasLimit"
-              >
+        userOperation: PartialBy<
+            UserOperation,
+            "callGasLimit" | "preVerificationGas" | "verificationGasLimit"
+        >
         entryPoint: entryPoint
     }
 
-export type EstimateUserOperationGasReturnType<entryPoint extends EntryPoint> =
-    GetEntryPointVersion<entryPoint> extends "v0.6"
-        ? {
-              preVerificationGas: bigint
-              verificationGasLimit: bigint
-              callGasLimit: bigint
-          }
-        : {
-              preVerificationGas: bigint
-              verificationGasLimit: bigint
-              callGasLimit: bigint
-              paymasterVerificationGasLimit?: bigint
-              paymasterPostOpGasLimit?: bigint
-          }
+export type EstimateUserOperationGasReturnType = {
+    preVerificationGas: bigint
+    verificationGasLimit: bigint
+    callGasLimit: bigint
+}
 
 export type EstimateUserOperationErrorType<entryPoint extends EntryPoint> =
     GetEstimateUserOperationGasErrorReturnType<entryPoint>
@@ -91,7 +72,7 @@ export const estimateUserOperationGas = async <
     client: Client<TTransport, TChain, TAccount, BundlerRpcSchema<entryPoint>>,
     args: Prettify<EstimateUserOperationGasParameters<entryPoint>>,
     stateOverrides?: StateOverrides
-): Promise<EstimateUserOperationGasReturnType<entryPoint>> => {
+): Promise<EstimateUserOperationGasReturnType> => {
     const { userOperation, entryPoint } = args
 
     const userOperationWithBigIntAsHex = deepHexlify(userOperation)
@@ -109,44 +90,17 @@ export const estimateUserOperationGas = async <
                 : [userOperationWithBigIntAsHex, entryPoint]
         })
 
-        const entryPointVersion = getEntryPointVersion(entryPoint)
-
-        if (entryPointVersion === "v0.6") {
-            const responseV06 = response as {
-                preVerificationGas: Hex
-                verificationGasLimit: Hex
-                callGasLimit: Hex
-            }
-
-            return {
-                preVerificationGas: BigInt(responseV06.preVerificationGas || 0),
-                verificationGasLimit: BigInt(
-                    responseV06.verificationGasLimit || 0
-                ),
-                callGasLimit: BigInt(responseV06.callGasLimit || 0)
-            } as EstimateUserOperationGasReturnType<entryPoint>
-        }
-
-        const responseV07 = response as {
+        const responseV06 = response as {
             preVerificationGas: Hex
             verificationGasLimit: Hex
             callGasLimit: Hex
-            paymasterVerificationGasLimit?: Hex
-            paymasterPostOpGasLimit?: Hex
         }
 
         return {
-            preVerificationGas: BigInt(responseV07.preVerificationGas || 0),
-            verificationGasLimit: BigInt(responseV07.verificationGasLimit || 0),
-            callGasLimit: BigInt(responseV07.callGasLimit || 0),
-            paymasterVerificationGasLimit:
-                responseV07.paymasterVerificationGasLimit
-                    ? BigInt(responseV07.paymasterVerificationGasLimit)
-                    : undefined,
-            paymasterPostOpGasLimit: responseV07.paymasterPostOpGasLimit
-                ? BigInt(responseV07.paymasterPostOpGasLimit)
-                : undefined
-        } as EstimateUserOperationGasReturnType<entryPoint>
+            preVerificationGas: BigInt(responseV06.preVerificationGas || 0),
+            verificationGasLimit: BigInt(responseV06.verificationGasLimit || 0),
+            callGasLimit: BigInt(responseV06.callGasLimit || 0)
+        } as EstimateUserOperationGasReturnType
     } catch (err) {
         throw getEstimateUserOperationGasError(err as BaseError, args)
     }

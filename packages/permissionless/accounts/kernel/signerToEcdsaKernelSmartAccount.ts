@@ -10,7 +10,6 @@ import {
     concatHex,
     encodeFunctionData,
     isAddressEqual,
-    toHex,
     zeroAddress
 } from "viem"
 import {
@@ -20,13 +19,7 @@ import {
 } from "viem/actions"
 import { getAccountNonce } from "../../actions/public/getAccountNonce"
 import { getSenderAddress } from "../../actions/public/getSenderAddress"
-import type {
-    ENTRYPOINT_ADDRESS_V07_TYPE,
-    EntryPoint,
-    Prettify
-} from "../../types"
-import type { ENTRYPOINT_ADDRESS_V06_TYPE } from "../../types/entrypoint"
-import { ENTRYPOINT_ADDRESS_V06, getEntryPointVersion } from "../../utils"
+import type { EntryPoint, Prettify } from "../../types"
 import { getUserOperationHash } from "../../utils/getUserOperationHash"
 import { isSmartAccountDeployed } from "../../utils/isSmartAccountDeployed"
 import { toSmartAccount } from "../toSmartAccount"
@@ -36,8 +29,6 @@ import {
     type SmartAccountSigner
 } from "../types"
 import { KernelInitAbi } from "./abi/KernelAccountAbi"
-import { KernelV3InitAbi } from "./abi/KernelV3AccountAbi"
-import { KernelV3MetaFactoryDeployWithFactoryAbi } from "./abi/KernelV3MetaFactoryAbi"
 import {
     DUMMY_ECDSA_SIGNATURE,
     ROOT_MODE_KERNEL_V2,
@@ -119,8 +110,8 @@ export const KERNEL_VERSION_TO_ADDRESSES_MAP: {
  * Get supported Kernel Smart Account version based on entryPoint
  * @param entryPoint
  */
-const getKernelVersion = (entryPoint: EntryPoint): KernelVersion => {
-    return entryPoint === ENTRYPOINT_ADDRESS_V06 ? "0.2.2" : "0.3.0-beta"
+const getKernelVersion = (): KernelVersion => {
+    return "0.2.2"
 }
 
 type KERNEL_ADDRESSES = {
@@ -138,16 +129,13 @@ type KERNEL_ADDRESSES = {
  * @param factoryAddress
  * @param metaFactoryAddress
  */
-const getDefaultAddresses = <entryPoint extends EntryPoint>(
-    entryPointAddress: entryPoint,
-    {
-        ecdsaValidatorAddress: _ecdsaValidatorAddress,
-        accountLogicAddress: _accountLogicAddress,
-        factoryAddress: _factoryAddress,
-        metaFactoryAddress: _metaFactoryAddress
-    }: Partial<KERNEL_ADDRESSES>
-): KERNEL_ADDRESSES => {
-    const kernelVersion = getKernelVersion(entryPointAddress)
+const getDefaultAddresses = ({
+    ecdsaValidatorAddress: _ecdsaValidatorAddress,
+    accountLogicAddress: _accountLogicAddress,
+    factoryAddress: _factoryAddress,
+    metaFactoryAddress: _metaFactoryAddress
+}: Partial<KERNEL_ADDRESSES>): KERNEL_ADDRESSES => {
+    const kernelVersion = getKernelVersion()
     const addresses = KERNEL_VERSION_TO_ADDRESSES_MAP[kernelVersion]
     const ecdsaValidatorAddress =
         _ecdsaValidatorAddress ?? addresses.ECDSA_VALIDATOR
@@ -176,34 +164,17 @@ export const getEcdsaRootIdentifierForKernelV3 = (
  * @param owner
  * @param ecdsaValidatorAddress
  */
-const getInitialisationData = <entryPoint extends EntryPoint>({
-    entryPoint: entryPointAddress,
+const getInitialisationData = ({
     owner,
     ecdsaValidatorAddress
 }: {
-    entryPoint: entryPoint
     owner: Address
     ecdsaValidatorAddress: Address
 }) => {
-    const entryPointVersion = getEntryPointVersion(entryPointAddress)
-
-    if (entryPointVersion === "v0.6") {
-        return encodeFunctionData({
-            abi: KernelInitAbi,
-            functionName: "initialize",
-            args: [ecdsaValidatorAddress, owner]
-        })
-    }
-
     return encodeFunctionData({
-        abi: KernelV3InitAbi,
+        abi: KernelInitAbi,
         functionName: "initialize",
-        args: [
-            getEcdsaRootIdentifierForKernelV3(ecdsaValidatorAddress),
-            zeroAddress /* hookAddress */,
-            owner,
-            "0x" /* hookData */
-        ]
+        args: [ecdsaValidatorAddress, owner]
     })
 }
 
@@ -217,10 +188,8 @@ const getInitialisationData = <entryPoint extends EntryPoint>({
  * @param ecdsaValidatorAddress
  */
 const getAccountInitCode = async <entryPoint extends EntryPoint>({
-    entryPoint: entryPointAddress,
     owner,
     index,
-    factoryAddress,
     accountLogicAddress,
     ecdsaValidatorAddress
 }: {
@@ -232,29 +201,19 @@ const getAccountInitCode = async <entryPoint extends EntryPoint>({
     ecdsaValidatorAddress: Address
 }): Promise<Hex> => {
     if (!owner) throw new Error("Owner account not found")
-    const entryPointVersion = getEntryPointVersion(entryPointAddress)
 
     // Build the account initialization data
     const initialisationData = getInitialisationData({
-        entryPoint: entryPointAddress,
         ecdsaValidatorAddress,
         owner
     })
 
     // Build the account init code
 
-    if (entryPointVersion === "v0.6") {
-        return encodeFunctionData({
-            abi: createAccountAbi,
-            functionName: "createAccount",
-            args: [accountLogicAddress, initialisationData, index]
-        })
-    }
-
     return encodeFunctionData({
-        abi: KernelV3MetaFactoryDeployWithFactoryAbi,
-        functionName: "deployWithFactory",
-        args: [factoryAddress, initialisationData, toHex(index, { size: 32 })]
+        abi: createAccountAbi,
+        functionName: "createAccount",
+        args: [accountLogicAddress, initialisationData, index]
     })
 }
 
@@ -331,22 +290,14 @@ const getAccountAddress = async <
     // Find the init code for this account
     const factoryData = await initCodeProvider()
 
-    const entryPointVersion = getEntryPointVersion(entryPointAddress)
-    if (entryPointVersion === "v0.6") {
-        return getSenderAddress<ENTRYPOINT_ADDRESS_V06_TYPE>(client, {
-            initCode: concatHex([factoryAddress, factoryData]),
-            entryPoint: entryPointAddress as ENTRYPOINT_ADDRESS_V06_TYPE
-        })
-    }
-    return getSenderAddress<ENTRYPOINT_ADDRESS_V07_TYPE>(client, {
-        factory: factoryAddress,
-        factoryData: factoryData,
-        entryPoint: entryPointAddress as ENTRYPOINT_ADDRESS_V07_TYPE
+    return getSenderAddress(client, {
+        initCode: concatHex([factoryAddress, factoryData]),
+        entryPoint: entryPointAddress
     })
 }
 
 export type SignerToEcdsaKernelSmartAccountParameters<
-    entryPoint extends EntryPoint,
+    entryPoint extends EntryPoint = EntryPoint,
     TSource extends string = string,
     TAddress extends Address = Address
 > = Prettify<{
@@ -391,20 +342,15 @@ export async function signerToEcdsaKernelSmartAccount<
         deployedAccountAddress
     }: SignerToEcdsaKernelSmartAccountParameters<entryPoint, TSource, TAddress>
 ): Promise<KernelEcdsaSmartAccount<entryPoint, TTransport, TChain>> {
-    const entryPointVersion = getEntryPointVersion(entryPointAddress)
-    const kernelVersion = getKernelVersion(entryPointAddress)
+    const kernelVersion = getKernelVersion()
 
-    const {
-        accountLogicAddress,
-        ecdsaValidatorAddress,
-        factoryAddress,
-        metaFactoryAddress
-    } = getDefaultAddresses(entryPointAddress, {
-        ecdsaValidatorAddress: _ecdsaValidatorAddress,
-        accountLogicAddress: _accountLogicAddress,
-        factoryAddress: _factoryAddress,
-        metaFactoryAddress: _metaFactoryAddress
-    })
+    const { accountLogicAddress, ecdsaValidatorAddress, factoryAddress } =
+        getDefaultAddresses({
+            ecdsaValidatorAddress: _ecdsaValidatorAddress,
+            accountLogicAddress: _accountLogicAddress,
+            factoryAddress: _factoryAddress,
+            metaFactoryAddress: _metaFactoryAddress
+        })
 
     // Get the private key related account
     const viemSigner: LocalAccount = {
@@ -435,10 +381,7 @@ export async function signerToEcdsaKernelSmartAccount<
                 ecdsaValidatorAddress,
                 initCodeProvider: generateInitCode,
                 deployedAccountAddress,
-                factoryAddress:
-                    entryPointVersion === "v0.6"
-                        ? factoryAddress
-                        : metaFactoryAddress
+                factoryAddress: factoryAddress
             }),
         client.chain?.id ?? getChainId(client)
     ])
@@ -544,10 +487,7 @@ export async function signerToEcdsaKernelSmartAccount<
 
             if (smartAccountDeployed) return "0x"
 
-            const _factoryAddress =
-                entryPointVersion === "v0.6"
-                    ? factoryAddress
-                    : metaFactoryAddress
+            const _factoryAddress = factoryAddress
             return concatHex([_factoryAddress, await generateInitCode()])
         },
 
@@ -561,9 +501,7 @@ export async function signerToEcdsaKernelSmartAccount<
 
             if (smartAccountDeployed) return undefined
 
-            return entryPointVersion === "v0.6"
-                ? factoryAddress
-                : metaFactoryAddress
+            return factoryAddress
         },
 
         async getFactoryData() {

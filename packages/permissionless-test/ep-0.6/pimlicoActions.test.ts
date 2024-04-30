@@ -91,7 +91,7 @@ describe("Pimlico Actions tests", () => {
             const { maxFeePerGas, maxPriorityFeePerGas } =
                 await publicClient.estimateFeesPerGas()
             const partialUserOp = await buildUserOp(eoaWalletClient)
-            const userOperation: UserOperation<"v0.6"> = {
+            const userOperation: UserOperation = {
                 ...partialUserOp,
                 maxFeePerGas: maxFeePerGas || 0n,
                 maxPriorityFeePerGas: maxPriorityFeePerGas || 0n,
@@ -217,7 +217,7 @@ describe("Pimlico Actions tests", () => {
 
         const partialUserOp = await buildUserOp(eoaWalletClient)
 
-        const userOperation: UserOperation<"v0.6"> = {
+        const userOperation: UserOperation = {
             ...partialUserOp,
             maxFeePerGas: maxFeePerGas || 0n,
             maxPriorityFeePerGas: maxPriorityFeePerGas || 0n,

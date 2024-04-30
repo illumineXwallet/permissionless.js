@@ -155,7 +155,7 @@ export type PimlicoPaymasterClientActions<entryPoint extends EntryPoint> = {
             PimlicoSponsorUserOperationParameters<entryPoint>,
             "entryPoint"
         >
-    ) => Promise<Prettify<SponsorUserOperationReturnType<entryPoint>>>
+    ) => Promise<Prettify<SponsorUserOperationReturnType>>
 
     validateSponsorshipPolicies: (
         args: Prettify<

@@ -7,11 +7,7 @@ import {
     type Hex,
     type Transport
 } from "viem"
-import type {
-    EntryPoint,
-    GetAccountParameterWithClient,
-    GetEntryPointVersion
-} from "../types/"
+import type { EntryPoint, GetAccountParameterWithClient } from "../types/"
 import type { UserOperation } from "../types/userOperation"
 import { parseAccount } from "./"
 import { getUserOperationHash } from "./getUserOperationHash"
@@ -31,7 +27,7 @@ export type SignUserOperationHashWithECDSAParams<
           }
         | {
               hash?: undefined
-              userOperation: UserOperation<GetEntryPointVersion<entryPoint>>
+              userOperation: UserOperation
               entryPoint: entryPoint
               chainId: number
           }

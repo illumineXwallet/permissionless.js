@@ -23,13 +23,6 @@ export function parseAccount(account: Address | Account): Account {
         return { address: account, type: "json-rpc" }
     return account
 }
-import {
-    ENTRYPOINT_ADDRESS_V06,
-    ENTRYPOINT_ADDRESS_V07,
-    getEntryPointVersion
-} from "./getEntryPointVersion"
-
-import { getPackedUserOperation } from "./getPackedUserOperation"
 
 export {
     transactionReceiptStatus,
@@ -44,9 +37,5 @@ export {
     AccountOrClientNotFoundError,
     isSmartAccountDeployed,
     providerToSmartAccountSigner,
-    getAddressFromInitCodeOrPaymasterAndData,
-    getPackedUserOperation,
-    getEntryPointVersion,
-    ENTRYPOINT_ADDRESS_V06,
-    ENTRYPOINT_ADDRESS_V07
+    getAddressFromInitCodeOrPaymasterAndData
 }

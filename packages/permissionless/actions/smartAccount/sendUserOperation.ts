@@ -7,11 +7,7 @@ import type {
     Prettify,
     UserOperation
 } from "../../types/"
-import type {
-    ENTRYPOINT_ADDRESS_V06_TYPE,
-    EntryPoint,
-    GetEntryPointVersion
-} from "../../types/entrypoint"
+import type { EntryPoint } from "../../types/entrypoint"
 import { AccountOrClientNotFoundError, parseAccount } from "../../utils/"
 import { sendUserOperation as sendUserOperationBundler } from "../bundler/sendUserOperation"
 import {
@@ -25,37 +21,19 @@ export type SendUserOperationParameters<
         | SmartAccount<entryPoint>
         | undefined
 > = {
-    userOperation: entryPoint extends ENTRYPOINT_ADDRESS_V06_TYPE
-        ? PartialBy<
-              UserOperation<"v0.6">,
-              | "sender"
-              | "nonce"
-              | "initCode"
-              | "callGasLimit"
-              | "verificationGasLimit"
-              | "preVerificationGas"
-              | "maxFeePerGas"
-              | "maxPriorityFeePerGas"
-              | "paymasterAndData"
-              | "signature"
-          >
-        : PartialBy<
-              UserOperation<"v0.7">,
-              | "sender"
-              | "nonce"
-              | "factory"
-              | "factoryData"
-              | "callGasLimit"
-              | "verificationGasLimit"
-              | "preVerificationGas"
-              | "maxFeePerGas"
-              | "maxPriorityFeePerGas"
-              | "paymaster"
-              | "paymasterVerificationGasLimit"
-              | "paymasterPostOpGasLimit"
-              | "paymasterData"
-              | "signature"
-          >
+    userOperation: PartialBy<
+        UserOperation,
+        | "sender"
+        | "nonce"
+        | "initCode"
+        | "callGasLimit"
+        | "verificationGasLimit"
+        | "preVerificationGas"
+        | "maxFeePerGas"
+        | "maxPriorityFeePerGas"
+        | "paymasterAndData"
+        | "signature"
+    >
 } & GetAccountParameter<entryPoint, TAccount> &
     Middleware<entryPoint>
 
@@ -82,13 +60,11 @@ export async function sendUserOperation<
     )(args)
 
     userOperation.signature = await account.signUserOperation(
-        userOperation as UserOperation<GetEntryPointVersion<entryPoint>>
+        userOperation as UserOperation
     )
 
     return sendUserOperationBundler(client, {
-        userOperation: userOperation as UserOperation<
-            GetEntryPointVersion<entryPoint>
-        >,
+        userOperation: userOperation as UserOperation,
         entryPoint: account.entryPoint
     })
 }

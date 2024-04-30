@@ -90,7 +90,7 @@ export type BundlerActions<entryPoint extends EntryPoint> = {
             Omit<EstimateUserOperationGasParameters<entryPoint>, "entryPoint">
         >,
         stateOverrides?: StateOverrides
-    ) => Promise<Prettify<EstimateUserOperationGasReturnType<entryPoint>>>
+    ) => Promise<Prettify<EstimateUserOperationGasReturnType>>
     /**
      *
      * Returns the supported entrypoints by the bundler service
@@ -157,7 +157,7 @@ export type BundlerActions<entryPoint extends EntryPoint> = {
      */
     getUserOperationByHash: (
         args: Prettify<GetUserOperationByHashParameters>
-    ) => Promise<Prettify<GetUserOperationByHashReturnType<entryPoint>> | null>
+    ) => Promise<Prettify<GetUserOperationByHashReturnType> | null>
     /**
      *
      * Returns the user operation receipt from userOpHash

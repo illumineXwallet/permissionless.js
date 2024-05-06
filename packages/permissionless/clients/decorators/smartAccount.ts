@@ -480,7 +480,7 @@ export function smartAccountActions<entryPoint extends EntryPoint>({
                 {
                     ...args,
                     middleware
-                },
+                } as typeof args,
                 stateOverrides
             ),
         deployContract: (args) =>

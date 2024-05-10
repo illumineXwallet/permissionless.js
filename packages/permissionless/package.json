@@ -1,8 +1,8 @@
 {
-    "name": "@illuminex/permissionless",
+    "name": "@illuminexswap/permissionless",
     "version": "0.2.0",
     "author": "Pimlico",
-    "repository": "github:illuminex/permissionless.js",
+    "repository": "github:illuminexswap/permissionless.js",
     "main": "./_cjs/index.js",
     "module": "./_esm/index.js",
     "types": "./_types/index.d.ts",

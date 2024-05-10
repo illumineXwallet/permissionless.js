@@ -1,5 +1,11 @@
 # permissionless
 
+## 0.2.0
+
+### Minor Changes
+
+- Remove v07 and assume always v06
+
 ## 0.1.21
 
 ### Patch Changes

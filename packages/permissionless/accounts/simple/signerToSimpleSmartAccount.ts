@@ -30,7 +30,7 @@ export type SimpleSmartAccount<
 
 const getAccountInitCode = async (
     owner: Address,
-    index = BigInt(0)
+    salt: Hex = `0x${"00".repeat(32)}`
 ): Promise<Hex> => {
     if (!owner) throw new Error("Owner account not found")
 
@@ -62,7 +62,7 @@ const getAccountInitCode = async (
             }
         ],
         functionName: "createAccount",
-        args: [owner, index] as const
+        args: [owner, salt] as const
     })
 }
 
@@ -75,15 +75,15 @@ const getAccountAddress = async <
     factoryAddress,
     entryPoint: entryPointAddress,
     owner,
-    index = BigInt(0)
+    salt
 }: {
     client: Client<TTransport, TChain>
     factoryAddress: Address
     owner: Address
     entryPoint: entryPoint
-    index?: bigint
+    salt?: Hex
 }): Promise<Address> => {
-    const factoryData = await getAccountInitCode(owner, index)
+    const factoryData = await getAccountInitCode(owner, salt)
 
     return getSenderAddress(client, {
         initCode: concatHex([factoryAddress, factoryData]),
@@ -99,7 +99,7 @@ export type SignerToSimpleSmartAccountParameters<
     signer: SmartAccountSigner<TSource, TAddress>
     factoryAddress: Address
     entryPoint: entryPoint
-    index?: bigint
+    salt?: Hex
     address?: Address
 }>
 
@@ -120,7 +120,7 @@ export async function signerToSimpleSmartAccount<
         signer,
         factoryAddress,
         entryPoint: entryPointAddress,
-        index = BigInt(0),
+        salt,
         address
     }: SignerToSimpleSmartAccountParameters<entryPoint, TSource, TAddress>
 ): Promise<SimpleSmartAccount<entryPoint, TTransport, TChain>> {
@@ -138,7 +138,7 @@ export async function signerToSimpleSmartAccount<
                 factoryAddress,
                 entryPoint: entryPointAddress,
                 owner: viemSigner.address,
-                index
+                salt
             }),
         client.chain?.id ?? getChainId(client)
     ])
@@ -195,7 +195,7 @@ export async function signerToSimpleSmartAccount<
 
             return concatHex([
                 factoryAddress,
-                await getAccountInitCode(viemSigner.address, index)
+                await getAccountInitCode(viemSigner.address, salt)
             ])
         },
         async getFactory() {
@@ -214,7 +214,7 @@ export async function signerToSimpleSmartAccount<
                 accountAddress
             )
             if (smartAccountDeployed) return undefined
-            return getAccountInitCode(viemSigner.address, index)
+            return getAccountInitCode(viemSigner.address, salt)
         },
         async encodeDeployCallData(_) {
             throw new Error("Simple account doesn't support account deployment")

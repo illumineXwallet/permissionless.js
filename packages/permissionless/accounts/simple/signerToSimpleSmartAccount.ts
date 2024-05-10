@@ -44,9 +44,9 @@ const getAccountInitCode = async (
                         type: "address"
                     },
                     {
-                        internalType: "uint256",
+                        internalType: "bytes32",
                         name: "salt",
-                        type: "uint256"
+                        type: "bytes32"
                     }
                 ],
                 name: "createAccount",

@@ -30,7 +30,7 @@ export type SimpleSmartAccount<
 
 const getAccountInitCode = async (
     owner: Address,
-    salt: Hex = `0x${"00".repeat(32)}`
+    salt: Hex = `0x${"00".repeat(32)}` as Hex
 ): Promise<Hex> => {
     if (!owner) throw new Error("Owner account not found")
 

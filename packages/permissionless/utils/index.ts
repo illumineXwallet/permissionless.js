@@ -24,6 +24,12 @@ export function parseAccount(account: Address | Account): Account {
     return account
 }
 
+export { getBundlerError } from "./errors/getBundlerError"
+export type {
+    GetBundlerErrorParameters,
+    GetBundlerErrorReturnType
+} from "./errors/getBundlerError"
+
 export {
     transactionReceiptStatus,
     deepHexlify,

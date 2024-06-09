@@ -9,7 +9,7 @@ export type {
     EntryPoint
 } from "./entrypoint"
 
-export type { PackedUserOperation } from "./userOperation"
+export type { PackedUserOperation, UserOperationWithBigIntAsHex } from "./userOperation"
 
 export type GetAccountParameterWithClient<
     TTransport extends Transport = Transport,

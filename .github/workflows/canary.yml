@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           registry-url: 'https://npm.pkg.github.com'
-          scope: illuminexswap
+          scope: illuminexwallet
 
       - name: Set permissionless version
         run: |
